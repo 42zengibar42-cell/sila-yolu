@@ -13,8 +13,8 @@ class RouteActivity : Base() {
 
         // Ülkeler
         section(t("Geçilen ülkeler", "Durchfahrene Länder"))
-        r.countries.forEach { code ->
-            val c = Data.countries[code] ?: return@forEach
+        val countryRows = r.countries.mapNotNull { code ->
+            val c = Data.countries[code] ?: return@mapNotNull null
             val row = card().apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -28,8 +28,9 @@ class RouteActivity : Base() {
             txt.addView(tv(c.currency.toString() + " · " + c.speed + t(" km/s", " km/h"), 13f, C.MUTED))
             row.addView(txt, lp(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             row.addView(tv("›", 26f, C.ACCENT, true))
-            root.addView(row, gap(8))
+            row
         }
+        root.addView(columns(countryRows, Screen.cols), gap(8))
 
         // Etaplar
         section(t("Etaplar — tek tek navigasyon", "Etappen — einzeln navigieren"))
@@ -41,7 +42,7 @@ class RouteActivity : Base() {
 
         val stops = r.stops + Stop(T("🏁 " + prefs.dest.ifBlank { "İstanbul" }, "🏁 " + prefs.dest.ifBlank { "İstanbul" }),
             prefs.dest.ifBlank { "İstanbul" } + ", Türkiye")
-        stops.forEachIndexed { i, s -> root.addView(stopRow(i + 1, s), gap(8)) }
+        root.addView(columns(stops.mapIndexed { i, s -> stopRow(i + 1, s) }, Screen.cols), gap(8))
 
         // Notlar
         section(t("Bu güzergah için", "Für diese Route"))

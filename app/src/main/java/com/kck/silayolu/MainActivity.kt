@@ -35,7 +35,7 @@ class MainActivity : Base() {
         section(t("Hedef (Türkiye'de)", "Ziel (in der Türkei)"))
         val dest = EditText(this).apply {
             setText(prefs.dest)
-            setTextColor(C.TEXT); setHintTextColor(C.MUTED); textSize = 18f
+            setTextColor(C.TEXT); setHintTextColor(C.MUTED); textSize = 18f * Screen.scale
             hint = t("Şehir veya adres", "Stadt oder Adresse")
             isSingleLine = true
             imeOptions = EditorInfo.IME_ACTION_DONE
@@ -52,7 +52,7 @@ class MainActivity : Base() {
         // Güzergah seçimi
         section(t("Güzergah", "Route"))
         val selected = prefs.route
-        Data.routes.forEach { r ->
+        val routeCards = Data.routes.map { r ->
             val on = r.id == selected
             val c = card().apply {
                 background = roundBg(if (on) C.HI else C.CARD, dp(14).toFloat(), if (on) C.ACCENT else 0)
@@ -61,22 +61,24 @@ class MainActivity : Base() {
             c.addView(tv((if (on) "● " else "○ ") + r.name.toString(), 17f, if (on) C.ACCENT else C.TEXT, true))
             c.addView(tv(r.countries.joinToString(" ") { Data.countries[it]?.flag ?: "" }, 20f), gap(4))
             c.addView(tv(r.desc.toString(), 14f, C.MUTED), gap(2))
-            root.addView(c, gap(8))
+            c
         }
+        root.addView(columns(routeCards, Screen.cols), gap(8))
 
         val route = Data.route(selected)
         root.addView(button("🧭 " + t("Google Maps ile yola çık", "Mit Google Maps losfahren")) {
             Maps.route(this, route.mapWaypoints, destination())
         }, gap(16))
-        root.addView(ghostButton("🗺️ " + t("Etaplar ve ülke bilgileri", "Etappen und Länderinfos")) {
-            startActivity(Intent(this, RouteActivity::class.java))
-        }, gap(10))
-
         val items = Data.checklistFor(selected)
         val done = items.count { prefs.checked(it.id) }
-        root.addView(ghostButton("✅ " + t("Kontrol listesi", "Checkliste") + "  ($done/${items.size})") {
-            startActivity(Intent(this, ChecklistActivity::class.java))
-        }, gap(10))
+        root.addView(columns(listOf(
+            ghostButton("🗺️ " + t("Etaplar ve ülke bilgileri", "Etappen und Länderinfos")) {
+                startActivity(Intent(this, RouteActivity::class.java))
+            },
+            ghostButton("✅ " + t("Kontrol listesi", "Checkliste") + "  ($done/${items.size})") {
+                startActivity(Intent(this, ChecklistActivity::class.java))
+            }
+        ), Screen.cols, 10), gap(10))
 
         // Yakında ara
         section(t("Yakınımda ara", "In meiner Nähe"))

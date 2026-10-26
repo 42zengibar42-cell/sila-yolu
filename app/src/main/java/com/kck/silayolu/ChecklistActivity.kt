@@ -13,13 +13,13 @@ class ChecklistActivity : Base() {
         header(t("Kontrol listesi", "Checkliste"))
         root.addView(tv(route.name.toString() + " · $done/${items.size} " + t("hazır", "erledigt"), 14f, C.MUTED), gap(6))
 
-        items.groupBy { it.group.toString() }.forEach { (group, list) ->
-            section(group)
+        val groups = items.groupBy { it.group.toString() }.map { (group, list) ->
             val c = card()
+            c.addView(tv(group, 13f, C.MUTED, true).apply { isAllCaps = true; setPadding(0, 0, 0, dp(4)) })
             list.forEach { item ->
                 c.addView(CheckBox(this).apply {
                     text = item.text.toString()
-                    textSize = 16f
+                    textSize = 16f * Screen.scale
                     setTextColor(C.TEXT)
                     buttonTintList = ColorStateList.valueOf(C.ACCENT)
                     isChecked = prefs.checked(item.id)
@@ -27,8 +27,9 @@ class ChecklistActivity : Base() {
                     setOnCheckedChangeListener { _, v -> prefs.setChecked(item.id, v) }
                 })
             }
-            root.addView(c, gap(8))
+            c
         }
+        root.addView(columns(groups, Screen.cols, 10), gap(14))
 
         root.addView(ghostButton("↺ " + t("Listeyi sıfırla", "Liste zurücksetzen")) {
             AlertDialog.Builder(this)

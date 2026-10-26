@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -26,6 +27,13 @@ object C {
 }
 
 object Lang { var tr = true }
+
+/** Ekran: telefon mu tablet mi */
+object Screen {
+    var wide = false      // en kısa kenar >= 600dp (7–10 inç tablet)
+    var scale = 1f        // tablette yazılar biraz büyük
+    val cols get() = if (wide) 2 else 1
+}
 
 fun t(tr: String, de: String): String = if (Lang.tr) tr else de
 
@@ -57,7 +65,7 @@ fun Context.dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toIn
 
 fun Context.tv(s: String, sp: Float = 16f, color: Int = C.TEXT, bold: Boolean = false): TextView =
     TextView(this).apply {
-        text = s; textSize = sp; setTextColor(color)
+        text = s; textSize = sp * Screen.scale; setTextColor(color)
         if (bold) setTypeface(typeface, Typeface.BOLD)
     }
 
@@ -92,22 +100,25 @@ fun lp(w: Int = LinearLayout.LayoutParams.MATCH_PARENT, h: Int = LinearLayout.La
 
 fun Context.gap(v: Int): LinearLayout.LayoutParams = lp().apply { topMargin = dp(v) }
 
-/** İki sütunlu düğme ızgarası */
-fun Context.grid(items: List<Pair<String, () -> Unit>>): LinearLayout {
+/** Görünümleri n sütunlu satırlara dizer */
+fun Context.columns(views: List<View>, cols: Int, space: Int = 8): LinearLayout {
     val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-    items.chunked(2).forEachIndexed { i, pair ->
+    views.chunked(cols).forEachIndexed { i, chunk ->
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        pair.forEachIndexed { j, (label, action) ->
-            val b = ghostButton(label, action)
-            row.addView(b, lp(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                if (j == 1) leftMargin = dp(8)
+        for (j in 0 until cols) {
+            val v = chunk.getOrNull(j) ?: View(this)
+            row.addView(v, lp(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
+                if (j > 0) leftMargin = dp(space)
             })
         }
-        if (pair.size == 1) row.addView(View(this), lp(0, 1, 1f).apply { leftMargin = dp(8) })
-        box.addView(row, lp().apply { if (i > 0) topMargin = dp(8) })
+        box.addView(row, lp().apply { if (i > 0) topMargin = dp(space) })
     }
     return box
 }
+
+/** Düğme ızgarası: telefonda 2, tablette 4 sütun */
+fun Context.grid(items: List<Pair<String, () -> Unit>>): LinearLayout =
+    columns(items.map { (label, action) -> ghostButton(label, action) }, if (Screen.wide) 4 else 2)
 
 abstract class Base : AppCompatActivity() {
     lateinit var prefs: Prefs
@@ -121,14 +132,31 @@ abstract class Base : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Lang.tr = prefs.lang == "tr"
+        val cfg = resources.configuration
+        Screen.wide = cfg.smallestScreenWidthDp >= 600
+        Screen.scale = when {
+            cfg.smallestScreenWidthDp >= 720 -> 1.25f   // 10 inç tablet
+            cfg.smallestScreenWidthDp >= 600 -> 1.15f   // 7–8 inç tablet
+            else -> 1f
+        }
+        val side = if (Screen.wide) 28 else 16
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(18), dp(16), dp(28))
+            setPadding(dp(side), dp(18), dp(side), dp(28))
+        }
+        // Çok geniş ekranda (yatay tablet) içerik ortada, okunur genişlikte durur
+        val maxW = dp(if (Screen.wide) 1000 else 10000)
+        val frame = FrameLayout(this).apply {
+            addView(root, FrameLayout.LayoutParams(
+                minOf(maxW, resources.displayMetrics.widthPixels),
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER_HORIZONTAL
+            ))
         }
         val scroll = ScrollView(this).apply {
             setBackgroundColor(C.BG)
             isFillViewport = true
-            addView(root)
+            addView(frame)
         }
         build()
         setContentView(scroll)
