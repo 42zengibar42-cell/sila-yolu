@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "415069198018",
+    "project_id": "sila-yolu42",
+    "storage_bucket": "sila-yolu42.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:415069198018:android:15c8759c40fdd4c15c0d5b",
+        "android_client_info": {
+          "package_name": "com.kck.silayolu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-IeX5C8RF05hIEWWuMSJ-TWe1HjrXQm8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /rooms/{room}/msgs/{id} {
+      allow read: if request.auth != null
+        && room in ['route_A','route_B','route_C','route_D','kapikule','ipsala','gradina','roszke','batrovci','nadlac','ruse'];
+
+      allow create: if request.auth != null
+        && room in ['route_A','route_B','route_C','route_D','kapikule','ipsala','gradina','roszke','batrovci','nadlac','ruse']
+        && request.resource.data.keys().hasOnly(['type','note','place','nick','uid','ts'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.ts == request.time
+        && request.resource.data.type is string && request.resource.data.type.size() <= 20
+        && request.resource.data.note is string && request.resource.data.note.size() <= 160
+        && request.resource.data.place is string && request.resource.data.place.size() <= 60
+        && request.resource.data.nick is string
+        && request.resource.data.nick.size() >= 2 && request.resource.data.nick.size() <= 24;
+
+      allow delete: if request.auth != null
+        && (resource.data.uid == request.auth.uid
+            || resource.data.ts < request.time - duration.value(12, 'h'));
+    }
+
+    match /flags/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['room','msg','uid','ts'])
+        && request.resource.data.uid == request.auth.uid;
+    }
+  }
+}

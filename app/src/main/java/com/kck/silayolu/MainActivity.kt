@@ -79,6 +79,9 @@ class MainActivity : Base() {
                 startActivity(Intent(this, ChecklistActivity::class.java))
             }
         ), Screen.cols, 10), gap(10))
+        root.addView(ghostButton("💬 " + t("Yol bildirimleri (yoğunluk, sınır, kaza)", "Straßenmeldungen (Stau, Grenze, Unfall)")) {
+            startActivity(Intent(this, RoomsActivity::class.java))
+        }, gap(10))
 
         // Yakında ara
         section(t("Yakınımda ara", "In meiner Nähe"))

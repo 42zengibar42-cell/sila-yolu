@@ -54,6 +54,17 @@ class Prefs(ctx: Context) {
         set(v) { sp.edit().putString("route", v).apply() }
     fun checked(id: String) = sp.getBoolean("c_$id", false)
     fun setChecked(id: String, v: Boolean) { sp.edit().putBoolean("c_$id", v).apply() }
+    var nick: String
+        get() = sp.getString("nick", "") ?: ""
+        set(v) { sp.edit().putString("nick", v).apply() }
+    var lastSent: Long
+        get() = sp.getLong("lastSent", 0L)
+        set(v) { sp.edit().putLong("lastSent", v).apply() }
+    var addPlace: Boolean
+        get() = sp.getBoolean("addPlace", true)
+        set(v) { sp.edit().putBoolean("addPlace", v).apply() }
+    val blocked: Set<String> get() = sp.getStringSet("blocked", emptySet()) ?: emptySet()
+    fun block(uid: String) { sp.edit().putStringSet("blocked", blocked + uid).apply() }
     fun resetChecks() {
         val e = sp.edit()
         sp.all.keys.filter { it.startsWith("c_") }.forEach { e.remove(it) }
